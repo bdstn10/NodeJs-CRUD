@@ -12,9 +12,26 @@ http.createServer((req, res) => {
         req.url = '/index';
     }
 
+    // Tangani jika ada permintaan halaman dari user
     let filename = '.' + req.url + '.html';
+    if (req.method == 'GET') {
+        fs.readFile(filename, (err, data) => {
+            if (err) {
+                res.writeHead(404, { 'Content-Type': 'text/html' });
+                res.end("<h1>404 Not Found!</h1>")
 
-    // Tangani jika user pengirim permintaan login
+                return console.error(err);
+
+            }
+
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write(data);
+
+            return res.end();
+        })
+    }
+
+    // Tangani jika user mengirim permintaan login
     if (req.url == '/login' && req.method == 'POST') {
         let body = ''
 
@@ -46,36 +63,62 @@ http.createServer((req, res) => {
                     }
 
                     // Tangani jika credential yg dimasukkan benar dan sebaliknya
+                    let response = ''
                     if (results.length > 0) {
-                        res.writeHead(200, { 'Content-Type': 'text/html' });
-                        res.write("<h1>Welcome User To Our System</h1>");
-
-                        return res.end(`<a href="/login">Logout</a>`);
+                        response = 'berhasil.html'
                     } else {
-                        res.writeHead(200, { 'Content-Type': 'text/html' });
-                        res.write("<h1>Sorry, You're Failed To Login</h1>");
-
-                        return res.end(`<a href="/login">Login Again</a>`);
+                        response = 'gagal.html'
                     }
+
+                    fs.readFile(response, (err, file) => {
+                        if (err) {
+                            res.writeHead(404, { 'Content-Type': 'text/html' });
+                            res.end("<h1>404 Not Found!</h1>")
+
+                            return console.error(err);
+
+                        }
+
+                        res.writeHead(200, { 'Content-Type': 'text/html' });
+                        res.write(file);
+
+                        return res.end();
+                    })
                 })
             })
         });
     }
 
-    fs.readFile(filename, (err, data) => {
-        if (err) {
-            res.writeHead(404, { 'Content-Type': 'text/html' });
-            res.end("<h1>404 Not Found!</h1>")
+    // Tangani jika user ingin menambah akun user 
+    if (req.url == '/tambahAkun' && req.method == 'POST') {
+        let body = '';
+        req.on('data', data => {
+            body += data;
+        })
+        req.on('end', () => {
+            let postData = querystring.parse(body)
+            let username = postData['uname'];
+            let password = postData['passwd'];
 
-            return console.error(err);
+            // Buat query untuk menambah user ke database
+            let query = `INSERT INTO users (id, name, password) VALUES (NULL, '${username}', '${password}')`;
 
-        }
+            db.query(query, (err, results) => {
+                if (err) {
+                    return console.error(err.message);
+                }
 
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.write(data);
+                if (results.affectedRows > 0) {
+                    res.writeHead(200, { 'Content-Type': 'text/html' });
 
-        res.end();
-    })
+                    res.write(`<p>Berhasil menambahkan akun <em>${username}</em></p>`);
+                    res.write('<a href="/tambahAkun">Tambahkan Akun Lagi</a>')
+                    res.end();
+                }
+            })
+        })
+    }
+
 }).listen(8080);
 
 console.log("Server listening on http://localhost:8080");

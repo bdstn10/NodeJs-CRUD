@@ -1,0 +1,18 @@
+
+doctype html
+head
+    meta(charset='UTF-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0')
+    title Login Page
+h1 Welcome Guest
+form(action='/login', method='post')
+    fieldset
+        legend
+            h3 Login To Our System
+        label(for='uname')
+            input#uname(type='text', name='uname')
+        label(for='passwd')
+            input#passwd(type='password', name='passwd')
+        br
+        button(type='submit') Login!
