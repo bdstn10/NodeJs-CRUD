@@ -70,7 +70,6 @@ http.createServer((req, res) => {
                         res.write(`
                                 <title>Login Successfully</title>
                                 <h1>Selamat Datang <em>${name}</em>, Anda Berhasil Login</h1>
-                                <p><a href="/tambahAkun">Tambah Akun User</a></p>
                                 <p><a href="/ubahSandi?id=${results[0]['id']}">Ubah Sandi</a></p>
                                 <p><a href="/login">Logout</a></p>
                                 <p><a href="/delete?id=${results[0]['id']}" style="color: red;" onclick="return confirm('Apakah anda yakin ingin menghapus akun ini?')">Delete Account</a></p>
@@ -95,7 +94,7 @@ http.createServer((req, res) => {
     }
 
     // Tangani jika user ingin menambahkan akun baru 
-    if (req.url == '/tambahAkun' && req.method == 'POST') {
+    if (req.url == '/signup' && req.method == 'POST') {
         let body = '';
         req.on('data', data => {
             body += data;
@@ -117,7 +116,8 @@ http.createServer((req, res) => {
                     res.writeHead(200, { 'Content-Type': 'text/html' });
 
                     res.write(`<p>Berhasil menambahkan akun <em>${username}</em></p>`);
-                    res.write('<a href="/tambahAkun">Tambahkan Akun Lagi</a>')
+                    res.write('<p><a href="/login">Login</a></p>');
+                    res.write('<a href="/signup">Buat Akun Lagi</a>');
                     res.end();
                 }
             })
