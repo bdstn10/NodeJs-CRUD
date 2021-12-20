@@ -69,7 +69,7 @@ http.createServer((req, res) => {
                         res.writeHead(200, { 'Content-Type': 'text/html' });
                         res.write(`
                                 <title>Login Successfully</title>
-                                <h1>Selamat, anda berhasil login</h1>
+                                <h1>Selamat Datang <em>${name}</em>, Anda Berhasil Login</h1>
                                 <p><a href="/tambahAkun">Tambah Akun User</a></p>
                                 <p><a href="/ubahSandi?id=${results[0]['id']}">Ubah Sandi</a></p>
                                 <p><a href="/login">Logout</a></p>
@@ -126,7 +126,7 @@ http.createServer((req, res) => {
 
     // Tangani jika user ingin mengubah sandi
     if (req.url.includes('/ubahSandi')) {
-        // Penangan jika user merequest dengan metode GET (Mengakses halaman ubah sandi)
+        // Penanganan jika user merequest dengan metode GET (Mengakses halaman ubah sandi)
         if (req.method == 'GET') {
             // Berikan halaman ubah sandi dengan isi dari ubahSandi.html
             fs.readFile('ubahSandi.html', (err, data) => {
@@ -148,17 +148,36 @@ http.createServer((req, res) => {
                 let id = url.parse(req.url, true)['query']['id'];
                 let userData = querystring.parse(body);
 
-                let username = userData.uname;
-                let password = userData.passwd;
+                let oldPasswd = userData.oldPasswd;
+                let newPasswd = userData.newPasswd;
 
-                let query = `UPDATE users SET name = '${username}', password = '${password}' WHERE users.id = ${id}`
-                db.query(query, (err, results) => {
-                    // Berikan feedback kepada user jika berhasil mengubah password
-                    if (results.affectedRows > 0) {
-                        res.write(`<script>alert("Berhasil mengubah password")</script>`);
-                        res.write(`<a href="/login">Login Ulang</a>`)
+                // Cek apakah password lama yang user masukkan sama dengan yang di db
+                let querySatu = `SELECT * FROM users WHERE id = ${id}`;
 
-                        return res.end();
+                db.query(querySatu, (err, results) => {
+                    // Cek apakah password lama yg dimasukkan sama dengan yg di db
+                    if (oldPasswd == results[0]['password']) {
+                        // Update password jika password lama sama dengan yang ada di db
+                        let queryDua = `UPDATE users SET password = '${newPasswd}' WHERE users.id = ${id}`
+                        db.query(queryDua, (err, results) => {
+                            if (err) {
+                                console.error(err);
+                            }
+                            // Berikan feedback kepada user jika berhasil mengubah password
+                            if (results.affectedRows > 0) {
+                                res.write(`<script>alert("Berhasil mengubah password")</script>`);
+                                res.write(`<a href="/login">Login Ulang</a>`)
+
+                                return res.end();
+                            }
+                        })
+                    } else {
+                        // Beri response jika password lama berbeda dengan yg di db
+                        res.writeHead(200, { 'Content-Type': 'text/html' });
+                        res.write(`<script>alert('Password lama salah!')</script>`);
+                        res.write(`<a href="/ubahSandi?id=${id}">Coba Lagi</a>`);
+
+                        res.end();
                     }
                 })
             })
