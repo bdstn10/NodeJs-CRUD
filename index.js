@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const querystring = require('querystring');
 const db = require('./db_config');
+const url = require('url');
 
 http.createServer((req, res) => {
     const homePages = ['/index', '/home', '/'];
@@ -14,7 +15,7 @@ http.createServer((req, res) => {
 
     // Tangani jika ada permintaan halaman dari user
     let filename = '.' + req.url + '.html';
-    if (req.method == 'GET') {
+    if (req.method == 'GET' && !req.url.includes('?')) {
         fs.readFile(filename, (err, data) => {
             if (err) {
                 res.writeHead(404, { 'Content-Type': 'text/html' });
@@ -63,33 +64,37 @@ http.createServer((req, res) => {
                     }
 
                     // Tangani jika credential yg dimasukkan benar dan sebaliknya
-                    let response = ''
                     if (results.length > 0) {
-                        response = 'berhasil.html'
-                    } else {
-                        response = 'gagal.html'
-                    }
-
-                    fs.readFile(response, (err, file) => {
-                        if (err) {
-                            res.writeHead(404, { 'Content-Type': 'text/html' });
-                            res.end("<h1>404 Not Found!</h1>")
-
-                            return console.error(err);
-
-                        }
-
+                        // Response ketika username dan password benar
                         res.writeHead(200, { 'Content-Type': 'text/html' });
-                        res.write(file);
+                        res.write(`
+                                <title>Login Successfully</title>
+                                <h1>Selamat, anda berhasil login</h1>
+                                <p><a href="/tambahAkun">Tambah Akun User</a></p>
+                                <p><a href="/ubahSandi?id=${results[0]['id']}">Ubah Sandi</a></p>
+                                <p><a href="/login">Logout</a></p>
+                                <p><a href="/delete?id=${results[0]['id']}" style="color: red;" onclick="return confirm('Apakah anda yakin ingin menghapus akun ini?')">Delete Account</a></p>
+                            `);
 
                         return res.end();
-                    })
+                    } else {
+                        // Response ketika username dan password salah
+                        res.writeHead(200, { 'Content-Type': 'text/html' });
+                        res.write(`
+                                <title>Login Failed</title>
+                                <h1>Maaf, anda gagal login</h1>
+                                <a href="/login">Login Ulang</a>
+                                `)
+
+                        return res.end();
+
+                    }
                 })
             })
         });
     }
 
-    // Tangani jika user ingin menambah akun user 
+    // Tangani jika user ingin menambahkan akun baru 
     if (req.url == '/tambahAkun' && req.method == 'POST') {
         let body = '';
         req.on('data', data => {
@@ -119,6 +124,75 @@ http.createServer((req, res) => {
         })
     }
 
+    // Tangani jika user ingin mengubah sandi
+    if (req.url.includes('/ubahSandi')) {
+        // Penangan jika user merequest dengan metode GET (Mengakses halaman ubah sandi)
+        if (req.method == 'GET') {
+            // Berikan halaman ubah sandi dengan isi dari ubahSandi.html
+            fs.readFile('ubahSandi.html', (err, data) => {
+                res.writeHead(200, { 'Content-Type': 'text/html' });
+                res.end(data);
+            })
+        }
+
+        // Penanganan jika user mengklik tombol ubah sandi
+        if (req.method == 'POST') {
+            // Buat variabel untuk menyimpan data yang dimasukkan user
+            let body = ''
+            req.on('data', (data) => {
+                body += data;
+            })
+
+            req.on('end', () => {
+                // Tangkap semua data yang diperlukan dalam operasi database nanti
+                let id = url.parse(req.url, true)['query']['id'];
+                let userData = querystring.parse(body);
+
+                let username = userData.uname;
+                let password = userData.passwd;
+
+                let query = `UPDATE users SET name = '${username}', password = '${password}' WHERE users.id = ${id}`
+                db.query(query, (err, results) => {
+                    // Berikan feedback kepada user jika berhasil mengubah password
+                    if (results.affectedRows > 0) {
+                        res.write(`<script>alert("Berhasil mengubah password")</script>`);
+                        res.write(`<a href="/login">Login Ulang</a>`)
+
+                        return res.end();
+                    }
+                })
+            })
+        }
+
+    }
+
+    // Tangani jika user ingin menghapus akun
+    if (req.url.includes('/delete')) {
+        // Tangkap id pengguna
+        let id = url.parse(req.url, true)['query']['id'];
+
+        // Hapus akun pengguna di db berdasarkan idnya
+        db.connect(err => {
+            if (err) {
+                console.error(err);
+            }
+
+            let query = `DELETE FROM users WHERE id = ${id}`;
+            db.query(query, (err, results) => {
+                if (err) {
+                    return console.error(err);
+                }
+
+                // Buat feedback kepada user jika berhasil hapus data
+                if (results.affectedRows > 0) {
+                    res.write(`<script>alert("Berhasil menghapus akun anda!")</script>`);
+                    res.write(`<a href="/login">Login Ulang</a>`)
+
+                    return res.end();
+                }
+            })
+        })
+    }
 }).listen(8080);
 
 console.log("Server listening on http://localhost:8080");
