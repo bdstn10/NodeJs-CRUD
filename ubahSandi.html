@@ -24,9 +24,36 @@
                 Password Baru:
                 <input type="password" name="newPasswd" id="newPasswd">
             </label>
+            <input type="button" value="Show Password" id='showHideBtn'>
+            <br>
             <button type="submit">Ubah</button>
         </fieldset>
     </form>
+    <!-- Buat fitur agar password dapat ditampilkan atau disembunyikan -->
+    <script>
+        // Tangkap elemen input password dan tombol yang digunakan untuk menampilkan/menyembunyikan password
+        const oldPasswdInput = document.getElementById('oldPasswd');
+        const newPasswdInput = document.getElementById('newPasswd');
+        const showHideBtn = document.getElementById('showHideBtn');
+
+        // Beri penanganan ketika tombol show hide password diklik
+        showHideBtn.addEventListener('click', () => {
+            // Cek apakah tipe dari input passwordnya password atau text
+            let oldPasswdInputType = oldPasswdInput.type;
+            let newPasswdInputType = newPasswdInput.type;
+            if (oldPasswdInputType == 'password' && newPasswdInputType == 'password') {
+                // Jika tipenya password, ubah jadi text
+                oldPasswdInput.type = 'text';
+                newPasswdInput.type = 'text';
+                showHideBtn.value = 'Hide Password';
+            } else {
+                // Jika tipenya text, ubah jadi password
+                oldPasswdInput.type = 'password';
+                newPasswdInput.type = 'password';
+                showHideBtn.value = 'Show Password';
+            }
+        })
+    </script>
 </body>
 
 </html>

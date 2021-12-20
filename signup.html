@@ -18,19 +18,41 @@
 
             <label for="uname">
                 Username :
-                <input type="text" name='uname' id="uname">
+                <input type="text" name='uname' id="uname" autofocus>
             </label>
             <label for="passwd">
                 Password :
                 <input type="password" name='passwd' id='passwd'>
             </label>
-
+            <input type="button" value="Show Password" id='showHideBtn'>
+            <br>
             <button type="submit">Add Account</button>
         </fieldset>
     </form>
     <p>
         <a href="/home">Kembali Ke Home Page</a>
     </p>
+    <!-- Buat fitur agar password dapat ditampilkan atau disembunyikan -->
+    <script>
+        // Tangkap elemen input password dan tombol yang digunakan untuk menampilkan/menyembunyikan password
+        const passwdInput = document.getElementById('passwd');
+        const showHideBtn = document.getElementById('showHideBtn');
+
+        // Beri penanganan ketika tombol show hide password diklik
+        showHideBtn.addEventListener('click', () => {
+            // Cek apakah tipe dari input passwordnya password atau text
+            let inputType = passwdInput.type;
+            if (inputType == 'password') {
+                // Jika tipenya password, ubah jadi text
+                passwdInput.type = 'text';
+                showHideBtn.value = 'Hide Password';
+            } else {
+                // Jika tipenya text, ubah jadi password
+                passwdInput.type = 'password';
+                showHideBtn.value = 'Show Password';
+            }
+        })
+    </script>
 </body>
 
 </html>
